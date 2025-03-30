@@ -1,39 +1,30 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
 
-# Replace with your new Telegram Bot Token and Chat ID
-BOT_TOKEN = "8156841245:AAF6iJLgxvI5VnpaMrWFyCNOYKhPEUYix3s"
-CHAT_ID = "-4640834480"
+TELEGRAM_BOT_TOKEN = "8156841245:AAF6iJLgxvI5VnpaMrWFyCNOYKhPEUYix3s"  # Replace with your actual bot token
+CHAT_ID = "-4640834480"  # Replace with your actual chat ID
 
-@app.route("/sendMessage", methods=["POST"])
+@app.route("/send-message", methods=["POST"])
 def send_message():
-    # Get form data
-    name = request.form.get("name")
-    email = request.form.get("email")
-    subject = request.form.get("subject")
-    message = request.form.get("message")
+    data = request.json  # Receive JSON data from frontend
+    name = data.get("name")
+    email = data.get("email")
+    subject = data.get("subject")
+    message = data.get("message")
 
-    # Format the message
-    text = f"📩 *New Contact Form Submission*\n\n👤 *Name:* {name}\n📧 *Email:* {email}\n📌 *Subject:* {subject}\n📝 *Message:* {message}"
-
-    # Telegram API URL
-    telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    telegram_message = f"📩 New Message:\n👤 Name: {name}\n📧 Email: {email}\n📌 Subject: {subject}\n💬 Message: {message}"
     
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown",
-    }
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    params = {"chat_id": CHAT_ID, "text": telegram_message}
 
-    # Send request to Telegram
-    response = requests.post(telegram_url, data=payload)
+    response = requests.post(url, params=params)
 
-    if response.ok:
-        return "Message sent successfully!"
+    if response.status_code == 200:
+        return jsonify({"message": "Message sent successfully!"})
     else:
-        return "Failed to send message.", 500
+        return jsonify({"message": "Failed to send message!"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
